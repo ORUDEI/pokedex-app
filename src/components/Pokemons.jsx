@@ -1,17 +1,47 @@
 import { IconSearch } from '@tabler/icons-react'
 import axios from 'axios'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import PokemonList from './PokemonList'
+import { useIntersectionObserver } from '../hooks/useIntersectionObserver'
+
+const INITIAL_LIMIT = 40
+const INCREASE_LIMIT = 20
 
 const Pokemons = () => {
   const [allPokemons, setAllPokemons] = useState([])
+  const [pokemonName, setPokemonName] = useState('')
+  const [limit, setLimit] = useState(INITIAL_LIMIT)
+
+  const targetObserver = useRef(null)
+  const entry = useIntersectionObserver(targetObserver, {})
+  const isVisible = !!entry?.isIntersecting
+
+  const pokemonsByName = allPokemons.filter((pokemon) =>
+    pokemon.name.includes(pokemonName)
+  )
+
+  const handleChangePokemonName = (e) => {
+    setPokemonName(e.target.value.toLowerCase())
+  }
 
   useEffect(() => {
     axios
-      .get('https://pokeapi.co/api/v2/pokemon?limit=50')
+      .get('https://pokeapi.co/api/v2/pokemon?limit=898')
       .then(({ data }) => setAllPokemons(data.results))
       .catch((err) => console.log(err))
   }, [])
+
+  useEffect(() => {
+    const maxPokemons = pokemonsByName.length
+    if (isVisible && maxPokemons !== 0) {
+      const newLimit = limit + INCREASE_LIMIT
+      newLimit > maxPokemons ? setLimit(maxPokemons) : setLimit(newLimit)
+    }
+  }, [isVisible])
+
+  useEffect(() => {
+    setLimit(INITIAL_LIMIT)
+  }, [pokemonName])
 
   return (
     <section className='p-4 py-5'>
@@ -21,13 +51,19 @@ const Pokemons = () => {
             className='flex-1 outline-none'
             type='text'
             placeholder='Search your Pokemon'
+            name='pokemonName'
+            onChange={handleChangePokemonName}
           />
-          <button className='p-2 transition-colors bg-red-500 shadow-md shadow-red-500/50 rounded-xl hover:bg-red-400'>
+          <button
+            type='button'
+            className='p-2 transition-colors bg-red-500 shadow-md shadow-red-500/50 rounded-xl hover:bg-red-400'
+          >
             <IconSearch color='white' stroke={3} />
           </button>
         </div>
       </form>
-    <PokemonList pokemons={allPokemons}/>
+      <PokemonList pokemons={pokemonsByName.slice(0, limit)} />
+      <span ref={targetObserver}></span>
     </section>
   )
 }
