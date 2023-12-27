@@ -22,7 +22,7 @@ const PokemonProvider = ({ children }) => {
     )
 
     const { id, name, height, weight, stats, types, abilities } = pokemonInfo
-      const evolutions = await getEvolutions(dataEvolution)
+    const evolutions = await getEvolutions(dataEvolution)
 
     setPokemonDetail({
       id,
@@ -36,6 +36,8 @@ const PokemonProvider = ({ children }) => {
       evolutions,
       image: getImageByPokemon(pokemonInfo.sprites)
     })
+
+    console.log(pokemonDetail)
 
     setShowDetailPokemon(true)
   }
